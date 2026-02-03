@@ -11,6 +11,9 @@ import superjson from "superjson";
 import { ZodError } from "zod";
 
 import { db } from "@/server/db";
+import { TRPCError } from "@trpc/server";
+import { validateRequest } from "@/server/auth/validateRequest";
+
 
 /**
  * 1. CONTEXT
@@ -24,12 +27,24 @@ import { db } from "@/server/db";
  *
  * @see https://trpc.io/docs/server/context
  */
+// export const createTRPCContext = async (opts: { headers: Headers }) => {
+//   return {
+//     db,
+//     ...opts,
+//   };
+// };
+
 export const createTRPCContext = async (opts: { headers: Headers }) => {
+  const { user, session } = await validateRequest();
+
   return {
     db,
+    user,
+    session,
     ...opts,
   };
 };
+
 
 /**
  * 2. INITIALIZATION
@@ -104,3 +119,37 @@ const timingMiddleware = t.middleware(async ({ next, path }) => {
  * are logged in.
  */
 export const publicProcedure = t.procedure.use(timingMiddleware);
+
+const isAuthed = t.middleware(async ({ ctx, next }) => {
+  if (!ctx.user) {
+    // For development: create or get a default test user if no session exists
+    if (process.env.NODE_ENV === "development") {
+      try {
+        const testUser = await ctx.db.query.users.findFirst({
+          where: (u, { eq }) => eq(u.username, "devuser"),
+        });
+
+        if (testUser) {
+          return next({
+            ctx: {
+              ...ctx,
+              user: testUser,
+            },
+          });
+        }
+      } catch (error) {
+        console.error("Error finding dev user:", error);
+      }
+    }
+    throw new TRPCError({ code: "UNAUTHORIZED" });
+  }
+  return next({
+    ctx: {
+      ...ctx,
+      user: ctx.user,
+    },
+  });
+});
+
+export const protectedProcedure = t.procedure.use(timingMiddleware).use(isAuthed);
+
