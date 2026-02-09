@@ -122,6 +122,7 @@ export const taskRouter = createTRPCRouter({
         description: z.string().optional(),
         status: z.enum(["pending", "in-progress", "completed"]).optional(),
         priority: z.enum(["low", "medium", "high"]).optional(),
+        imageUrl: z.string().url().optional(),
       }),
     )
     .mutation(async ({ ctx, input }) => {
@@ -134,6 +135,7 @@ export const taskRouter = createTRPCRouter({
           description: input.description,
           status: input.status ?? "pending",
           priority: input.priority ?? "medium",
+          imageUrl: input.imageUrl,
           userId: user.id,
         })
         .returning();
@@ -150,6 +152,7 @@ export const taskRouter = createTRPCRouter({
         description: z.string().optional(),
         status: z.enum(["pending", "in-progress", "completed"]).optional(),
         priority: z.enum(["low", "medium", "high"]).optional(),
+        imageUrl: z.string().url().optional(),
       }),
     )
     .mutation(async ({ ctx, input }) => {
@@ -175,6 +178,7 @@ export const taskRouter = createTRPCRouter({
             : {}),
           ...(input.status !== undefined ? { status: input.status } : {}),
           ...(input.priority !== undefined ? { priority: input.priority } : {}),
+          ...(input.imageUrl !== undefined ? { imageUrl: input.imageUrl } : {}),
         })
         .where(eq(tasks.id, input.id))
         .returning();

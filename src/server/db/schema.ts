@@ -110,6 +110,9 @@ export const tasks = pgTable(
     status: taskStatusEnum("status").notNull().default("pending"),
     priority: taskPriorityEnum("priority").notNull().default("medium"),
 
+    // Image URL for task
+    imageUrl: varchar("image_url", { length: 2048 }),
+
     // Ownership
     userId: uuid("user_id")
       .notNull()

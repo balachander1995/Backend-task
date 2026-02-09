@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { ImageUpload } from "@/app/_components/image-upload";
 
 interface Task {
   id: string;
@@ -10,6 +11,7 @@ interface Task {
   status: string;
   priority: string;
   createdAt: string;
+  imageUrl?: string | null;
 }
 
 interface User {
@@ -27,19 +29,22 @@ export default function TasksPage() {
   const [taskDescription, setTaskDescription] = useState("");
   const [taskStatus, setTaskStatus] = useState("");
   const [taskPriority, setTaskPriority] = useState("");
-  
+  const [taskImageUrl, setTaskImageUrl] = useState<string | null>(null);
+
   // Search filters
   const [searchTitle, setSearchTitle] = useState("");
   const [searchDescription, setSearchDescription] = useState("");
   const [searchStatus, setSearchStatus] = useState<string | null>(null);
   const [searchPriority, setSearchPriority] = useState<string | null>(null);
-  
+
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editTitle, setEditTitle] = useState("");
   const [editDescription, setEditDescription] = useState("");
   const [editStatus, setEditStatus] = useState("pending");
   const [editPriority, setEditPriority] = useState("medium");
-  
+  const [editImageUrl, setEditImageUrl] = useState<string | null>(null);
+  const [showImageUpload, setShowImageUpload] = useState<string | null>(null);
+
   const router = useRouter();
 
   // Get user from localStorage on mount
@@ -69,6 +74,7 @@ export default function TasksPage() {
           description: taskDescription,
           status: taskStatus,
           priority: taskPriority,
+          imageUrl: taskImageUrl,
         }),
       });
 
@@ -83,6 +89,7 @@ export default function TasksPage() {
         setTaskDescription("");
         setTaskStatus("");
         setTaskPriority("");
+        setTaskImageUrl(null);
         void handleFetchTasks();
       } else {
         const errorData = (await res.json()) as Record<string, unknown>;
@@ -114,19 +121,19 @@ export default function TasksPage() {
         const data = (await res.json()) as Record<string, unknown>;
         if ("data" in data && Array.isArray(data.data)) {
           let filtered = data.data as Task[];
-          
+
           // Client-side filtering for title and description
           if (searchTitle) {
-            filtered = filtered.filter(t => 
+            filtered = filtered.filter(t =>
               t.title.toLowerCase().includes(searchTitle.toLowerCase())
             );
           }
           if (searchDescription) {
-            filtered = filtered.filter(t => 
+            filtered = filtered.filter(t =>
               (t.description?.toLowerCase() ?? "").includes(searchDescription.toLowerCase())
             );
           }
-          
+
           setTasks(filtered);
         }
       } else {
@@ -169,7 +176,7 @@ export default function TasksPage() {
     }
   };
 
-  const handleEditTask = async (id: string, updateData: { status?: string; priority?: string; title?: string; description?: string }) => {
+  const handleEditTask = async (id: string, updateData: { status?: string; priority?: string; title?: string; description?: string; imageUrl?: string }) => {
     try {
       const res = await fetch(`/api/tasks/${id}`, {
         method: "PUT",
@@ -188,6 +195,7 @@ export default function TasksPage() {
           setEditingId(null);
           setEditTitle("");
           setEditDescription("");
+          setEditImageUrl(null);
         }
         void handleFetchTasks();
       } else {
@@ -307,6 +315,29 @@ export default function TasksPage() {
             </div>
           </div>
 
+          {/* Image Upload Section */}
+          <div className="mt-6 p-4 bg-gray-50 rounded-lg">
+            <ImageUpload
+              taskId="new"
+              onUploadSuccess={(url) => {
+                setTaskImageUrl(url);
+                setMessage("✅ Image uploaded successfully!");
+              }}
+              onUploadError={(error) => {
+                setMessage(`❌ Image upload failed: ${error}`);
+              }}
+            />
+            {taskImageUrl && (
+              <div className="mt-3">
+                <img
+                  src={taskImageUrl}
+                  alt="Task preview"
+                  className="max-w-xs h-auto rounded-md border border-gray-300"
+                />
+              </div>
+            )}
+          </div>
+
           <button
             onClick={handleCreateTask}
             className="mt-4 w-full bg-green-500 hover:bg-green-600 text-white font-semibold py-2 rounded-lg transition"
@@ -412,6 +443,7 @@ export default function TasksPage() {
               <table className="w-full text-sm">
                 <thead className="bg-gray-100">
                   <tr>
+                    <th className="px-4 py-2 text-left">Image</th>
                     <th className="px-4 py-2 text-left">Title</th>
                     <th className="px-4 py-2 text-left">Description</th>
                     <th className="px-4 py-2 text-left">Status</th>
@@ -425,6 +457,38 @@ export default function TasksPage() {
                     <tr key={task.id} className="border-t hover:bg-gray-50">
                       {editingId === task.id ? (
                         <>
+                          <td className="px-4 py-2">
+                            {(editImageUrl) && (
+                              <div>
+                                <img
+                                  src={editImageUrl}
+                                  alt="Task"
+                                  className="max-w-16 h-auto rounded"
+                                />
+                              </div>
+                            )}
+                            {showImageUpload === task.id && (
+                              <ImageUpload
+                                taskId={task.id}
+                                onUploadSuccess={(url) => {
+                                  setEditImageUrl(url);
+                                  setShowImageUpload(null);
+                                  setMessage("✅ Image uploaded successfully (Click Save to apply)");
+                                }}
+                                onUploadError={(error) => {
+                                  setMessage(`❌ Image upload failed: ${error}`);
+                                }}
+                              />
+                            )}
+                            {!showImageUpload && (
+                              <button
+                                onClick={() => setShowImageUpload(task.id)}
+                                className="text-xs text-blue-500 hover:text-blue-700 mt-1"
+                              >
+                                {editImageUrl ? "Change" : "Add"} Image
+                              </button>
+                            )}
+                          </td>
                           <td className="px-4 py-2">
                             <input
                               type="text"
@@ -471,13 +535,18 @@ export default function TasksPage() {
                                   description: editDescription,
                                   status: editStatus,
                                   priority: editPriority,
+                                  imageUrl: editImageUrl ?? undefined,
                                 })}
                                 className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded text-xs"
                               >
                                 Save
                               </button>
                               <button
-                                onClick={() => setEditingId(null)}
+                                onClick={() => {
+                                  setEditingId(null);
+                                  setShowImageUpload(null);
+                                  setEditImageUrl(null);
+                                }}
                                 className="bg-gray-500 hover:bg-gray-600 text-white px-3 py-1 rounded text-xs"
                               >
                                 Cancel
@@ -487,6 +556,22 @@ export default function TasksPage() {
                         </>
                       ) : (
                         <>
+                          <td className="px-4 py-2">
+                            {task.imageUrl ? (
+                              <img
+                                src={task.imageUrl}
+                                alt={task.title}
+                                className="max-w-16 h-auto rounded border border-gray-300 cursor-pointer hover:opacity-75"
+                                onClick={() => {
+                                  if (task.imageUrl) {
+                                    window.open(task.imageUrl, "_blank");
+                                  }
+                                }}
+                              />
+                            ) : (
+                              <span className="text-gray-400 text-xs">No image</span>
+                            )}
+                          </td>
                           <td className="px-4 py-2 font-semibold">
                             {task.title}
                           </td>
@@ -494,24 +579,22 @@ export default function TasksPage() {
                             {task.description ?? "-"}
                           </td>
                           <td className="px-4 py-2">
-                            <span className={`px-2 py-1 rounded text-xs ${
-                              task.status === "pending"
+                            <span className={`px-2 py-1 rounded text-xs ${task.status === "pending"
                                 ? "bg-blue-100 text-blue-800"
                                 : task.status === "in-progress"
                                   ? "bg-yellow-100 text-yellow-800"
                                   : "bg-green-100 text-green-800"
-                            }`}>
+                              }`}>
                               {task.status.charAt(0).toUpperCase() + task.status.slice(1).replace("-", " ")}
                             </span>
                           </td>
                           <td className="px-4 py-2">
-                            <span className={`px-2 py-1 rounded text-xs ${
-                              task.priority === "high"
+                            <span className={`px-2 py-1 rounded text-xs ${task.priority === "high"
                                 ? "bg-red-100 text-red-800"
                                 : task.priority === "medium"
                                   ? "bg-yellow-100 text-yellow-800"
                                   : "bg-green-100 text-green-800"
-                            }`}>
+                              }`}>
                               {task.priority.charAt(0).toUpperCase() + task.priority.slice(1)}
                             </span>
                           </td>
@@ -527,6 +610,7 @@ export default function TasksPage() {
                                   setEditDescription(task.description ?? "");
                                   setEditStatus(task.status);
                                   setEditPriority(task.priority);
+                                  setEditImageUrl(task.imageUrl ?? null);
                                 }}
                                 className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded text-xs"
                               >

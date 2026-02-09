@@ -10,6 +10,7 @@ const schema = z.object({
   description: z.string().optional(),
   status: z.enum(["pending", "in-progress", "completed"]).optional(),
   priority: z.enum(["low", "medium", "high"]).optional(),
+  imageUrl: z.string().nullable().optional(),
 });
 
 export async function PUT(
@@ -58,6 +59,7 @@ export async function PUT(
         ...(body.description !== undefined && { description: body.description }),
         ...(body.status && { status: body.status }),
         ...(body.priority && { priority: body.priority }),
+        ...(body.imageUrl !== undefined && { imageUrl: body.imageUrl }),
       })
       .where(eq(tasks.id, id))
       .returning();

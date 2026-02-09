@@ -9,6 +9,7 @@ const schema = z.object({
   description: z.string().optional(),
   status: z.enum(["pending", "in-progress", "completed"]).optional(),
   priority: z.enum(["low", "medium", "high"]).optional(),
+  imageUrl: z.string().url().optional().or(z.null()),
 });
 
 export async function POST(req: NextRequest) {
@@ -31,6 +32,7 @@ export async function POST(req: NextRequest) {
         description: body.description,
         status: body.status ?? "pending",
         priority: body.priority ?? "medium",
+        imageUrl: body.imageUrl,
         userId: user.id,
       })
       .returning();
