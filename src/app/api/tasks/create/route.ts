@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+import { type NextRequest, NextResponse } from "next/server";
 import { db } from "@/server/db";
 import { tasks } from "@/server/db/schema";
 import { validateRequest } from "@/server/auth/validateRequest";

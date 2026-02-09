@@ -49,11 +49,12 @@ export async function uploadImageToStorage(
     }
 
     // Generate unique filename
-    const fileExtension = file.name.split(".").pop() || "jpg";
+    // Generate unique filename
+    const fileExtension = file.name.split(".").pop() ?? "jpg";
     const fileName = `${taskId}-${Date.now()}.${fileExtension}`;
 
     // Upload to Supabase Storage
-    const { data, error } = await supabase.storage
+    const { error } = await supabase.storage
       .from(BUCKET_NAME)
       .upload(`task-images/${fileName}`, file, {
         cacheControl: "3600",

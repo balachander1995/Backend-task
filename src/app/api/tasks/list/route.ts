@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+import { type NextRequest, NextResponse } from "next/server";
 import { db } from "@/server/db";
 import { tasks } from "@/server/db/schema";
 import { validateRequest } from "@/server/auth/validateRequest";
@@ -24,7 +24,7 @@ export async function GET(req: NextRequest) {
     }
 
     const searchParams = req.nextUrl.searchParams;
-    
+
     // Parse with defaults when values are null
     const params = schema.parse({
       page: searchParams.get("page") ?? "1",

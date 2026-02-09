@@ -36,10 +36,12 @@ async function test() {
                 console.error("❌ 'image_url' column is MISSING.");
             }
         } catch (err) {
-            console.error("Failed to check schema:", err.message);
+            const error = /** @type {any} */ (err);
+            console.error("Failed to check schema:", error.message);
         }
 
-    } catch (error) {
+    } catch (err) {
+        const error = /** @type {any} */ (err);
         console.error("❌ Connection failed:");
         console.error(error.message);
         if (error.code) console.error(`Error code: ${error.code}`);

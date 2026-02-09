@@ -3,7 +3,7 @@ import { db } from "@/server/db";
 import { users } from "@/server/db/schema";
 import { validateRequest } from "@/server/auth/validateRequest";
 
-export async function GET(req: NextRequest) {
+export async function GET(_req: NextRequest) {
   try {
     const { user } = await validateRequest();
 

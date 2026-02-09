@@ -28,7 +28,7 @@ export function ImageUpload({
     }
 
     // Upload file immediately
-    handleUpload(file);
+    void handleUpload(file);
   };
 
   const handleUpload = async (file: File) => {
@@ -52,7 +52,7 @@ export function ImageUpload({
 
       if (!response.ok || !data.success) {
         const errorMsg =
-          data.error || "Failed to upload image";
+          data.error ?? "Failed to upload image";
         onUploadError(errorMsg);
         return;
       }

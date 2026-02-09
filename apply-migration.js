@@ -30,7 +30,8 @@ async function migrate() {
         }
 
     } catch (error) {
-        console.error("❌ Migration failed:", error.message);
+        const err = /** @type {any} */ (error);
+        console.error("❌ Migration failed:", err.message);
     } finally {
         await sql.end();
     }
